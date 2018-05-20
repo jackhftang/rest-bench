@@ -21,7 +21,7 @@ go version go1.10.1 linux/amd64
 $ cat /etc/issue
 Ubuntu 16.04.4 LTS \n \l
 ```
-CPU: Intel® Core™ i7-7500U CPU @ 2.70GHz × 4
+CPU: Intel® Core™ i7 CPU @ 2.20GHz × 4
 
 ## Node.js
 Start the server
@@ -35,15 +35,15 @@ $ wrk -d 20s -s post.lua http://localhost:3000
 Running 20s test @ http://localhost:3000
   2 threads and 10 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   793.29us  221.36us  11.96ms   92.88%
-    Req/Sec     6.36k   513.96    12.33k    83.04%
-  253629 requests in 20.10s, 564.55MB read
-Requests/sec:  12618.86
-Transfer/sec:     28.09MB
+    Latency     1.05ms  410.09us  12.83ms   85.53%
+    Req/Sec     4.85k   729.92     5.84k    65.42%
+  194145 requests in 20.10s, 432.14MB read
+Requests/sec:   9658.75
+Transfer/sec:     21.50MB
 ```
 During the test the _node_ process runs at ~100% CPU and ~70MB memory.
 
-## Go
+## Go with GOMAXPROCS=1
 Start the server
 ```
 $ GOMAXPROCS=1 go run server.go
@@ -57,40 +57,29 @@ $ wrk -d 20s -s post.lua http://localhost:3000
 Running 20s test @ http://localhost:3000
   2 threads and 10 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.40ms  735.96us   7.03ms   59.42%
-    Req/Sec     3.59k   249.95     7.36k    93.77%
-  143198 requests in 20.10s, 318.06MB read
-Requests/sec:   7124.41
-Transfer/sec:     15.82MB
+    Latency   689.89us  401.59us   7.40ms   68.67%
+    Req/Sec     7.44k   728.13     8.14k    89.55%
+  297390 requests in 20.10s, 671.60MB read
+Requests/sec:  14795.37
+Transfer/sec:     33.41MB
 ```
 During the test the _server_ process runs at ~100% CPU and ~10MB memory.
 
-The Go server parses the JSON request into fixed structures.
-It is interesting to test what happens when we use unstructured JSON parsing with `interface{}`. So, open [server.go](server.go) and change this line
+## Go
+Start the server
 ```
-	var body Body
+$ go run server.go
+2018/05/19 23:45:39 Listening on port 3000
 ```
-to
-```
-	var body interface{}
-```
-Run again the test
+Run the test in a separate console
 ```
 $ wrk -d 20s -s post.lua http://localhost:3000
 Running 20s test @ http://localhost:3000
   2 threads and 10 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.03ms    1.08ms  22.77ms   63.43%
-    Req/Sec     2.48k   128.59     2.73k    74.00%
-  98894 requests in 20.01s, 219.65MB read
-Requests/sec:   4943.11
-Transfer/sec:     10.98MB
+    Latency   283.51us  284.38us  10.48ms   93.11%
+    Req/Sec    19.23k     1.59k   21.29k    79.60%
+  769098 requests in 20.10s, 1.70GB read
+Requests/sec:  38262.62
+Transfer/sec:     86.41MB
 ```
-
-## Conclusion
-Surprisingly Node.js is faster at HTTP and JSON handling.
-
-![chart](chart.png)
-
-We see also that in Go structured JSON is faster.
-You can find more details about this [here](https://github.com/dotchev/go-json-bench).
